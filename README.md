@@ -4,11 +4,10 @@ MCP stdio bridge for Aionis execution memory.
 
 Docs: [https://docs.aionis.work/integrations/mcp](https://docs.aionis.work/integrations/mcp)
 
-Use this package when you want Claude Code, Cursor, or another MCP client to
-try Aionis without rewriting the host Agent loop first. MCP is the fastest
-public trial path for Aionis Execution Memory: connect the bridge, call
-`aionis_context`, and let the Agent continue from governed state instead of raw
-chat history.
+Use this package when you want Claude Code, Cursor, Codex-style tools, or
+another MCP client to use Aionis without rewriting the host Agent loop first.
+Connect the bridge, call `aionis_context`, and let the Agent continue from
+governed state instead of raw chat history.
 
 ```bash
 npx @aionis/mcp@latest --base-url http://127.0.0.1:3001 --scope-from workspace
@@ -77,11 +76,11 @@ Use this flow:
 
 1. Use `aionis_record_step` as a planner to record the accepted plan,
    active targets, acceptance checks, and execution boundary.
-2. Use `aionis_record_step` again for any rejected branch as `outcome:
-   "failed"` with the rejected target files.
+2. Use `aionis_record_step` again for rejected or superseded evidence with the
+   target files and validation result.
 3. Ask `aionis_context` for the worker/reviewer context before implementation.
-4. Use `aionis_flight_recorder` after the run to replay which plan memories and
-   failed branches were visible at decision time.
+4. Use `aionis_flight_recorder` after the run to replay which plan memories,
+   boundaries, and rehydrate pointers were visible at decision time.
 
 This is the MCP shape of Aionis Plan as Memory Asset: the MCP client can use a
 strong planner once, then let later workers continue from adjudicated execution
@@ -109,7 +108,7 @@ direct the Agent:
 
 ```json
 {
-  "query_text": "Continue without reusing failed branches.",
+  "query_text": "Continue from the current accepted implementation state.",
   "mode": "firewall",
   "candidates": [
     {
