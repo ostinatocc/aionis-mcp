@@ -16,7 +16,7 @@ npx @aionis/mcp@latest --base-url http://127.0.0.1:3001 --scope-from workspace
 Start a local Runtime first:
 
 ```bash
-npx @aionis/create@latest
+npx aionis setup
 cd Aionis
 npm run -s lite:start
 ```
