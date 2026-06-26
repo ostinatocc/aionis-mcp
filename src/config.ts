@@ -231,7 +231,7 @@ Options:
   --mode <name>             full_power, standard, or none. Defaults to AIONIS_GUIDE_MODE or full_power.
   -h, --help                Show help.
 
-Examples:
+Common commands:
   npx @aionis/mcp --base-url http://127.0.0.1:3001 --tenant local --scope my-project
   npx @aionis/mcp --base-url http://127.0.0.1:3001 --scope-from workspace
   npx @aionis/mcp --base-url http://127.0.0.1:3001 --scope-from git

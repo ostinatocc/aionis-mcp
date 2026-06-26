@@ -63,10 +63,10 @@ for MCP clients that only want prompt text; richer clients should read
 It accepts `context_mode: "compact_agent"` when an MCP client needs a shorter
 Runtime guide, and `budget_profile`, `max_prompt_chars`, `repo_state`, and
 `additional_instructions` when the host can provide execution-environment facts.
-For example, pass `repo_state.missing_files` so Aionis can tell the Agent that a
+For instance, pass `repo_state.missing_files` so Aionis can tell the Agent that a
 missing active target is pending work rather than stale memory.
 
-For Claude Code or Cursor demos, the recommended first loop is:
+For Claude Code, Cursor, or another MCP host, the recommended first loop is:
 
 ```text
 aionis_context -> Agent action -> aionis_record_step -> aionis_flight_recorder
@@ -203,5 +203,5 @@ drop-in path; the SDK is the full application integration path.
 Claude Code / Cursor walkthrough:
 [https://docs.aionis.work/integrations/mcp](https://docs.aionis.work/integrations/mcp)
 
-Runnable proof artifacts:
-[https://docs.aionis.work/examples](https://docs.aionis.work/examples)
+Generated proof artifacts:
+[https://docs.aionis.work/research](https://docs.aionis.work/research)
