@@ -91,7 +91,7 @@ The tool returns these structured fields in `structuredContent`:
 
 | Field | Meaning |
 |---|---|
-| `execution_context` | SDK-compiled execution contract, including active targets, missing active targets, warnings, and final `agent_prompt`. |
+| `execution_context` | SDK structured execution context for host logic and audit, including active targets, missing active targets, warnings, and prompt budget metadata. |
 | `memory_use_receipt` | Compact audit receipt showing which memories were exposed, suppressed, rehydrated, or attributed. |
 | `memory_admission_record` | Read-only per-memory admission ledger for host/operator logs and future dataset export. |
 | `rehydrate_requests` | Memory IDs that need raw evidence recovery before exact use. |
