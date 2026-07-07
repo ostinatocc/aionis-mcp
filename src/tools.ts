@@ -218,6 +218,14 @@ function result(payload: JsonRecord): ToolResult {
   };
 }
 
+function executionContextAuditView(value: unknown): JsonRecord {
+  const record = asRecord(value, "execution_context");
+  const output: JsonRecord = { ...record };
+  delete output.agent_prompt;
+  delete output.base_prompt;
+  return output;
+}
+
 function asRecord(value: unknown, label: string): JsonRecord {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error(`${label} must be an object`);
@@ -425,9 +433,9 @@ export async function handleAionisMcpTool(
       ok: true,
       observed,
       guide,
-      agent_context: agentContext,
+      agent_context: agentContext.agent_context,
       agent_prompt: agentContext.agent_prompt,
-      execution_context: executionContext,
+      execution_context: executionContextAuditView(executionContext),
       memory_use_receipt: executionContext.memory_use_receipt,
       memory_admission_record: executionContext.memory_admission_record,
       rehydrate_requests: executionContext.rehydrate_requests,

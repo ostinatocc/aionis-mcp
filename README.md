@@ -56,10 +56,10 @@ The server exposes stable product tools, not internal Runtime packets:
 
 `aionis_context` is the MCP transport for the canonical SDK AgentContext. It
 calls `execution.guideAgentContextForRole()`, returns the same top-level
-`agent_prompt`, and exposes the compiled `aionis_execution_agent_context_v1`
-under `structuredContent.execution_context`. MCP clients that only want prompt
-text can read `agent_prompt`; richer clients should read the structured
-execution context and receipts.
+`agent_prompt`, and exposes a prompt-free `aionis_execution_agent_context_v1`
+audit view under `structuredContent.execution_context`. MCP clients should pass
+only top-level `agent_prompt` to an Agent; richer clients can also read the
+structured execution context and receipts for host logic.
 
 It accepts `context_mode: "compact_agent"` when an MCP client needs a shorter
 Runtime guide, and `budget_profile`, `max_prompt_chars`, `repo_state`, and

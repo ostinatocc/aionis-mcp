@@ -140,16 +140,17 @@ function fakeClient(calls: Array<{ method: string; input?: unknown; options?: un
           guide,
           ...(contextOptions ?? {}),
         });
+        const agentPrompt = guide.agent_context.prompt_text;
         return {
           contract_version: "aionis_sdk_agent_context_with_evidence_v1",
           guide,
           compiled_context: compiled,
           agent_context: guide.agent_context,
-          agent_prompt: compiled.agent_prompt,
+          agent_prompt: agentPrompt,
           resolved_evidence: [],
           unresolved_memory_ids: [],
           evidence_char_count: 0,
-          prompt_char_count: compiled.agent_prompt.length,
+          prompt_char_count: agentPrompt.length,
           guide_trace_id: guide.guide_trace_id,
         };
       },
@@ -381,7 +382,7 @@ test("@aionis/mcp exposes stable product tools", () => {
   assert.equal(server.isConnected(), false);
 });
 
-test("@aionis/mcp context tool records optional observation then compiles prompt", async () => {
+test("@aionis/mcp context tool records optional observation then returns SDK AgentContext prompt", async () => {
   const calls: Array<{ method: string; input?: unknown; options?: unknown }> = [];
   const output = await handleAionisMcpTool(fakeClient(calls), "aionis_context", {
     run_id: "run-1",
@@ -404,11 +405,13 @@ test("@aionis/mcp context tool records optional observation then compiles prompt
   });
 
   assert.deepEqual(calls.map((call) => call.method), ["observeStep", "guideAgentContextForRole"]);
-  assert.match(output.content[0]?.text ?? "", /AIONIS_EXECUTION_AGENT_CONTEXT v1/);
+  assert.match(output.structuredContent?.agent_prompt as string, /AIONIS_CTX v2/);
+  assert.doesNotMatch(output.structuredContent?.agent_prompt as string, /AIONIS_EXECUTION_AGENT_CONTEXT v1/);
   assert.equal(output.structuredContent?.drop_in_mode, true);
   assert.equal(output.structuredContent?.feedback_required, false);
-  assert.equal(output.structuredContent?.agent_prompt, (output.structuredContent?.execution_context as Record<string, unknown>)?.agent_prompt);
   assert.equal((output.structuredContent?.execution_context as Record<string, unknown>)?.contract_version, "aionis_execution_agent_context_v1");
+  assert.equal((output.structuredContent?.execution_context as Record<string, unknown>)?.agent_prompt, undefined);
+  assert.equal((output.structuredContent?.execution_context as Record<string, unknown>)?.base_prompt, undefined);
   assert.deepEqual((output.structuredContent?.execution_context as Record<string, unknown>)?.missing_active_targets, ["src/checkout.ts"]);
   assert.equal((output.structuredContent?.memory_use_receipt as Record<string, unknown>)?.contract_version, "aionis_memory_use_receipt_v1");
   assert.equal((output.structuredContent?.memory_admission_record as Record<string, unknown>)?.contract_version, "aionis_memory_admission_record_v1");
@@ -595,7 +598,8 @@ test("@aionis/mcp speaks MCP listTools and callTool over transport", async () =>
         query_text: "Continue safely.",
       },
     });
-    assert.match(response.content[0]?.type === "text" ? response.content[0].text : "", /AIONIS_EXECUTION_AGENT_CONTEXT v1/);
+    assert.match(response.content[0]?.type === "text" ? response.content[0].text : "", /AIONIS_CTX v2/);
+    assert.doesNotMatch(response.content[0]?.type === "text" ? response.content[0].text : "", /AIONIS_EXECUTION_AGENT_CONTEXT v1/);
     assert.deepEqual(calls.map((call) => call.method), ["guideAgentContextForRole"]);
   } finally {
     await client.close();
