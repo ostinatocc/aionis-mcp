@@ -7,6 +7,7 @@ import path from "node:path";
 import test from "node:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { compileExecutionAgentContext } from "@aionis/sdk";
 import {
   AIONIS_USER_WORKSPACE_IDENTITY_DIR,
   AIONIS_WORKSPACE_IDENTITY_PATH,
@@ -78,9 +79,9 @@ function fakeClient(calls: Array<{ method: string; input?: unknown; options?: un
         calls.push({ method: "handoff", input });
         return { handoff: true };
       },
-      guideForRole: async (input) => {
-        calls.push({ method: "guideForRole", input });
-        return {
+      guideAgentContextForRole: async (input, _options, contextOptions) => {
+        calls.push({ method: "guideAgentContextForRole", input });
+        const guide = {
           guide_trace_id: "guide-1",
           agent_context: {
             prompt_text: "AIONIS_CTX v2\nCURRENT_ACTIVE_PATH: continue verified branch",
@@ -134,6 +135,22 @@ function fakeClient(calls: Array<{ method: string; input?: unknown; options?: un
               fallback_policy: "do_not_promote_reference_or_blocked_targets",
             },
           },
+        };
+        const compiled = compileExecutionAgentContext({
+          guide,
+          ...(contextOptions ?? {}),
+        });
+        return {
+          contract_version: "aionis_sdk_agent_context_with_evidence_v1",
+          guide,
+          compiled_context: compiled,
+          agent_context: guide.agent_context,
+          agent_prompt: compiled.agent_prompt,
+          resolved_evidence: [],
+          unresolved_memory_ids: [],
+          evidence_char_count: 0,
+          prompt_char_count: compiled.agent_prompt.length,
+          guide_trace_id: guide.guide_trace_id,
         };
       },
       observeOutcome: async (input) => {
@@ -386,7 +403,7 @@ test("@aionis/mcp context tool records optional observation then compiles prompt
     additional_instructions: ["Prefer the accepted route."],
   });
 
-  assert.deepEqual(calls.map((call) => call.method), ["observeStep", "guideForRole"]);
+  assert.deepEqual(calls.map((call) => call.method), ["observeStep", "guideAgentContextForRole"]);
   assert.match(output.content[0]?.text ?? "", /AIONIS_EXECUTION_AGENT_CONTEXT v1/);
   assert.equal(output.structuredContent?.drop_in_mode, true);
   assert.equal(output.structuredContent?.feedback_required, false);
@@ -460,7 +477,7 @@ test("@aionis/mcp preserves cross-agent continuity through shared scope", async 
     feedback: false,
   });
 
-  assert.deepEqual(calls.map((call) => call.method), ["observeOutcome", "guideForRole", "observeOutcome"]);
+  assert.deepEqual(calls.map((call) => call.method), ["observeOutcome", "guideAgentContextForRole", "observeOutcome"]);
   assert.equal((calls[0]?.input as { role?: string; scope?: string }).role, "planner");
   assert.equal((calls[1]?.input as { role?: string; scope?: string }).role, "worker");
   assert.equal((calls[2]?.input as { role?: string; scope?: string }).role, "verifier");
@@ -579,7 +596,7 @@ test("@aionis/mcp speaks MCP listTools and callTool over transport", async () =>
       },
     });
     assert.match(response.content[0]?.type === "text" ? response.content[0].text : "", /AIONIS_EXECUTION_AGENT_CONTEXT v1/);
-    assert.deepEqual(calls.map((call) => call.method), ["guideForRole"]);
+    assert.deepEqual(calls.map((call) => call.method), ["guideAgentContextForRole"]);
   } finally {
     await client.close();
     await server.close();

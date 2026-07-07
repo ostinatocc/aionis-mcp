@@ -54,11 +54,12 @@ The server exposes stable product tools, not internal Runtime packets:
 | `aionis_flight_recorder` | Replay what memory the Agent could see at decision time. |
 | `aionis_health` | Check Runtime reachability. |
 
-`aionis_context` is compiler-first. It calls Runtime guide through the SDK, then
-renders the same `aionis_execution_agent_context_v1` contract that SDK users get
-from `compileExecutionAgentContext()`. The top-level `agent_prompt` field is kept
-for MCP clients that only want prompt text; richer clients should read
-`structuredContent.execution_context`.
+`aionis_context` is the MCP transport for the canonical SDK AgentContext. It
+calls `execution.guideAgentContextForRole()`, returns the same top-level
+`agent_prompt`, and exposes the compiled `aionis_execution_agent_context_v1`
+under `structuredContent.execution_context`. MCP clients that only want prompt
+text can read `agent_prompt`; richer clients should read the structured
+execution context and receipts.
 
 It accepts `context_mode: "compact_agent"` when an MCP client needs a shorter
 Runtime guide, and `budget_profile`, `max_prompt_chars`, `repo_state`, and

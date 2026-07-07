@@ -1,7 +1,6 @@
 import {
   commandPostureFromGuide,
   commandPostureMemoryIdsFromGuide,
-  compileExecutionAgentContext,
   createAionisClient,
   inspectFirstMemoryIdsFromGuide,
   mustNotMemoryIdsFromGuide,
@@ -49,7 +48,7 @@ export type AionisMcpClient = Pick<AionisClient, "remember" | "measure" | "snaps
   flightRecorder: AionisClient["flightRecorder"];
   execution: Pick<
     AionisClient["execution"],
-    "observeStep" | "handoff" | "guideForRole" | "observeOutcome" | "measureRun" | "snapshotRun"
+    "observeStep" | "handoff" | "guideAgentContextForRole" | "observeOutcome" | "measureRun" | "snapshotRun"
   >;
 };
 
@@ -384,7 +383,20 @@ export async function handleAionisMcpTool(
       });
     }
 
-    const guide = await client.execution.guideForRole({
+    const contextOptions = {
+      task: {
+        run_id: input.run_id,
+        task_id: input.task_id,
+        task_signature: input.task_signature,
+        query_text: input.query_text,
+      },
+      repo_state: input.repo_state,
+      budget_profile: input.budget_profile,
+      max_prompt_chars: input.max_prompt_chars,
+      include_base_prompt: input.include_base_prompt,
+      additional_instructions: input.additional_instructions,
+    };
+    const agentContext = await client.execution.guideAgentContextForRole({
       run_id: input.run_id,
       task_id: input.task_id,
       task_signature: input.task_signature,
@@ -406,26 +418,15 @@ export async function handleAionisMcpTool(
       context_compaction_profile: input.context_compaction_profile,
       context_optimization_profile: input.context_optimization_profile,
       guide: input.guide,
-    });
-    const executionContext = compileExecutionAgentContext({
-      guide,
-      task: {
-        run_id: input.run_id,
-        task_id: input.task_id,
-        task_signature: input.task_signature,
-        query_text: input.query_text,
-      },
-      repo_state: input.repo_state,
-      budget_profile: input.budget_profile,
-      max_prompt_chars: input.max_prompt_chars,
-      include_base_prompt: input.include_base_prompt,
-      additional_instructions: input.additional_instructions,
-    });
+    }, undefined, contextOptions as Parameters<AionisClient["execution"]["guideAgentContextForRole"]>[2]);
+    const guide = agentContext.guide;
+    const executionContext = agentContext.compiled_context;
     return result({
       ok: true,
       observed,
       guide,
-      agent_prompt: executionContext.agent_prompt,
+      agent_context: agentContext,
+      agent_prompt: agentContext.agent_prompt,
       execution_context: executionContext,
       memory_use_receipt: executionContext.memory_use_receipt,
       memory_admission_record: executionContext.memory_admission_record,
