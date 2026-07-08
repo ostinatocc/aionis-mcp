@@ -140,17 +140,16 @@ function fakeClient(calls: Array<{ method: string; input?: unknown; options?: un
           guide,
           ...(contextOptions ?? {}),
         });
-        const agentPrompt = guide.agent_context.prompt_text;
         return {
           contract_version: "aionis_sdk_agent_context_with_evidence_v1",
           guide,
           compiled_context: compiled,
           agent_context: guide.agent_context,
-          agent_prompt: agentPrompt,
+          agent_prompt: compiled.agent_prompt,
           resolved_evidence: [],
           unresolved_memory_ids: [],
           evidence_char_count: 0,
-          prompt_char_count: agentPrompt.length,
+          prompt_char_count: compiled.agent_prompt.length,
           guide_trace_id: guide.guide_trace_id,
         };
       },
@@ -393,7 +392,6 @@ test("@aionis/mcp context tool records optional observation then returns SDK Age
     title: "Resume checkout migration",
     summary: "Worker is continuing after verifier approved the adapter boundary.",
     target_files: ["src/checkout.ts"],
-    context_mode: "compact_agent",
     context_char_budget: 3000,
     repo_state: {
       missing_files: ["src/checkout.ts"],
@@ -405,8 +403,8 @@ test("@aionis/mcp context tool records optional observation then returns SDK Age
   });
 
   assert.deepEqual(calls.map((call) => call.method), ["observeStep", "guideAgentContextForRole"]);
-  assert.match(output.structuredContent?.agent_prompt as string, /AIONIS_CTX v2/);
-  assert.doesNotMatch(output.structuredContent?.agent_prompt as string, /AIONIS_EXECUTION_AGENT_CONTEXT v1/);
+  assert.match(output.structuredContent?.agent_prompt as string, /AIONIS_EXECUTION_AGENT_CONTEXT v1/);
+  assert.match(output.structuredContent?.agent_prompt as string, /BASE_AIONIS_CONTEXT/);
   assert.equal(output.structuredContent?.drop_in_mode, true);
   assert.equal(output.structuredContent?.feedback_required, false);
   assert.equal((output.structuredContent?.execution_context as Record<string, unknown>)?.contract_version, "aionis_execution_agent_context_v1");
@@ -438,7 +436,7 @@ test("@aionis/mcp context tool records optional observation then returns SDK Age
     },
   ]);
   assert.equal((calls[0]?.input as { outcome?: string }).outcome, "unknown");
-  assert.equal((calls[1]?.input as { context_mode?: string }).context_mode, "compact_agent");
+  assert.equal((calls[1]?.input as { context_mode?: string }).context_mode, undefined);
   assert.equal((calls[1]?.input as { context_char_budget?: number }).context_char_budget, 3000);
 });
 
@@ -598,8 +596,8 @@ test("@aionis/mcp speaks MCP listTools and callTool over transport", async () =>
         query_text: "Continue safely.",
       },
     });
-    assert.match(response.content[0]?.type === "text" ? response.content[0].text : "", /AIONIS_CTX v2/);
-    assert.doesNotMatch(response.content[0]?.type === "text" ? response.content[0].text : "", /AIONIS_EXECUTION_AGENT_CONTEXT v1/);
+    assert.match(response.content[0]?.type === "text" ? response.content[0].text : "", /AIONIS_EXECUTION_AGENT_CONTEXT v1/);
+    assert.match(response.content[0]?.type === "text" ? response.content[0].text : "", /BASE_AIONIS_CONTEXT/);
     assert.deepEqual(calls.map((call) => call.method), ["guideAgentContextForRole"]);
   } finally {
     await client.close();
