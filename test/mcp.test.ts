@@ -136,9 +136,13 @@ function fakeClient(calls: Array<{ method: string; input?: unknown; options?: un
             },
           },
         };
+        const effectiveContextOptions = { ...(contextOptions ?? {}) };
+        if (effectiveContextOptions.include_base_prompt === undefined && input.context_mode === "compact_agent") {
+          effectiveContextOptions.include_base_prompt = false;
+        }
         const compiled = compileExecutionAgentContext({
           guide,
-          ...(contextOptions ?? {}),
+          ...effectiveContextOptions,
         });
         return {
           contract_version: "aionis_sdk_agent_context_with_evidence_v1",
@@ -594,10 +598,13 @@ test("@aionis/mcp speaks MCP listTools and callTool over transport", async () =>
         run_id: "run-transport",
         task_signature: "checkout-migration",
         query_text: "Continue safely.",
+        context_mode: "compact_agent",
       },
     });
     assert.match(response.content[0]?.type === "text" ? response.content[0].text : "", /AIONIS_EXECUTION_AGENT_CONTEXT v1/);
-    assert.match(response.content[0]?.type === "text" ? response.content[0].text : "", /BASE_AIONIS_CONTEXT/);
+    assert.doesNotMatch(response.content[0]?.type === "text" ? response.content[0].text : "", /BASE_AIONIS_CONTEXT/);
+    assert.match(String(response.structuredContent?.agent_prompt ?? ""), /AIONIS_EXECUTION_AGENT_CONTEXT v1/);
+    assert.doesNotMatch(String(response.structuredContent?.agent_prompt ?? ""), /BASE_AIONIS_CONTEXT/);
     assert.deepEqual(calls.map((call) => call.method), ["guideAgentContextForRole"]);
   } finally {
     await client.close();
