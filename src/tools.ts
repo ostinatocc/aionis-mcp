@@ -82,7 +82,7 @@ export type AionisContextInput = {
   repo_state?: AionisExecutionRepoState;
   budget_profile?: AionisExecutionContextBudgetProfile;
   max_prompt_chars?: number;
-  include_base_prompt?: boolean;
+  prompt_format?: "contract" | "runtime_compact";
   additional_instructions?: string[];
 };
 
@@ -401,7 +401,7 @@ export async function handleAionisMcpTool(
       repo_state: input.repo_state,
       budget_profile: input.budget_profile,
       max_prompt_chars: input.max_prompt_chars,
-      include_base_prompt: input.include_base_prompt,
+      prompt_format: input.prompt_format,
       additional_instructions: input.additional_instructions,
     };
     const agentContext = await client.execution.guideAgentContextForRole({

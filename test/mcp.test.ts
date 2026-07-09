@@ -136,13 +136,9 @@ function fakeClient(calls: Array<{ method: string; input?: unknown; options?: un
             },
           },
         };
-        const effectiveContextOptions = { ...(contextOptions ?? {}) };
-        if (effectiveContextOptions.include_base_prompt === undefined && input.context_mode === "compact_agent") {
-          effectiveContextOptions.include_base_prompt = false;
-        }
         const compiled = compileExecutionAgentContext({
           guide,
-          ...effectiveContextOptions,
+          ...(contextOptions ?? {}),
         });
         return {
           contract_version: "aionis_sdk_agent_context_with_evidence_v1",
@@ -408,7 +404,7 @@ test("@aionis/mcp context tool records optional observation then returns SDK Age
 
   assert.deepEqual(calls.map((call) => call.method), ["observeStep", "guideAgentContextForRole"]);
   assert.match(output.structuredContent?.agent_prompt as string, /AIONIS_EXECUTION_AGENT_CONTEXT v1/);
-  assert.match(output.structuredContent?.agent_prompt as string, /BASE_AIONIS_CONTEXT/);
+  assert.doesNotMatch(output.structuredContent?.agent_prompt as string, /BASE_AIONIS_CONTEXT/);
   assert.equal(output.structuredContent?.drop_in_mode, true);
   assert.equal(output.structuredContent?.feedback_required, false);
   assert.equal((output.structuredContent?.execution_context as Record<string, unknown>)?.contract_version, "aionis_execution_agent_context_v1");

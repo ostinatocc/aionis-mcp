@@ -112,7 +112,7 @@ export function createAionisMcpServer(client: AionisMcpClient): McpServer {
       repo_state: repoState.describe("Optional host-observed file presence for execution-context warnings."),
       budget_profile: z.enum(["compact", "balanced", "high_recall"]).optional(),
       max_prompt_chars: z.number().int().positive().optional(),
-      include_base_prompt: z.boolean().optional(),
+      prompt_format: z.enum(["contract", "runtime_compact"]).optional(),
       additional_instructions: stringArray,
     },
   });
